@@ -21,6 +21,7 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Welcome to the HomePage!")
 	fmt.Println("Endpoint Hit: homePage")
 }
+
 func deleteItem(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	params := mux.Vars(r)
@@ -31,6 +32,26 @@ func deleteItem(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 	}
+	json.NewEncoder(w).Encode(inventory)
+}
+
+func updateItem(w http.ResponseWriter, r *http.Request){
+	w.Header().Set("Content-Type", "application/json")
+
+	var item Item
+	_=json.NewDecoder(r.Body).Decode(&item)
+
+	params:=mux.Vars(r)
+	for index, item := range inventory {
+		if item.UID == params["UID"] {
+			//Delete exisiting item from slice
+			inventory = append(inventory[:index], inventory[index+1:]...)
+			break
+		}
+	}
+	//Create new item with new data
+	inventory=append(inventory, item)
+
 	json.NewEncoder(w).Encode(inventory)
 }
 
@@ -61,6 +82,7 @@ func handleRequests() {
 	router.HandleFunc("/inventory", getInventory).Methods("GET")
 	router.HandleFunc("/inventory", createItem).Methods("POST")
 	router.HandleFunc("/inventory/{UID}", deleteItem).Methods("DELETE")
+	router.HandleFunc("/inventory/{UID}", updateItem).Methods("PUT")
 	
 	log.Fatal(http.ListenAndServe(":8000", router))
 }
